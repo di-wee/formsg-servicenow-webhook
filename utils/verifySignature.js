@@ -1,16 +1,25 @@
-const formsg = require('@opengovsg/formsg-sdk')({ mode: 'production' });
+const crypto = require("crypto");
 
 module.exports = function verifySignature(req) {
   try {
-    const header = req.headers['x-formsg-signature'];
-    const body = JSON.stringify(req.body);
-    return formsg.webhooks.verifySignature(
-      process.env.FORM_SECRET_KEY,
-      body,
-      header
-    );
-  } catch (e) {
-    console.error('Signature validation failed', e);
+    const rawBody = req.rawBody; // MUST come from express raw body middleware
+    const signatureHeader = req.headers["x-formsg-signature"];
+    const secretKey = process.env.FORM_SECRET_KEY;
+
+    if (!rawBody || !signatureHeader || !secretKey) {
+      console.error("Missing required fields for signature check");
+      return false;
+    }
+
+    // Compute HMAC
+    const computedSignature = crypto
+      .createHmac("sha256", secretKey)
+      .update(rawBody)
+      .digest("base64");
+
+    return computedSignature === signatureHeader;
+  } catch (err) {
+    console.error("Signature validation failed:", err);
     return false;
   }
 };
