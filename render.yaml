@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: formsg-servicenow-webhook
+    env: node
+    region: singapore
+    plan: free
+
+    buildCommand: "npm install"
+    startCommand: "npm start"
+
+    envVars:
+      - key: NODE_VERSION
+        value: 18
+
+      - key: FORM_SECRET_KEY
+        sync: false
+
+      - key: SERVICENOW_INSTANCE
+        sync: false
+
+      - key: SERVICENOW_USERNAME
+        sync: false
+
+      - key: SERVICENOW_PASSWORD
+        sync: false
+
+      - key: SERVICENOW_TABLE
+        value: u_yrsg_case
+
+      - key: PORT
+        value: 3000
