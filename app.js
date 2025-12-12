@@ -6,7 +6,8 @@ const app = express();
 
 // Capture raw body for signature validation
 app.use(
-  ({
+  express.raw({
+    type: "*/*",
     verify: (req, res, buf) => {
       req.rawBody = buf.toString();
     },
