@@ -48,13 +48,8 @@ app.post('/formsg/webhook',
         if (submission) {
             // Continue processing the submission
             console.log(submission);
-            return res.status(200).send({ message: 'Success' })
-        } else {
-            // Could not decrypt the submission
-            return res.status(400).send({ message: 'Bad Request' })
-        }
-
-         // 2) Extract FormSG responses
+            ////////////////mapping logic///////////////////
+            // 2) Extract FormSG responses
   //const body = req.body;
   //const responses = body?.data?.responses || [];
 
@@ -151,6 +146,14 @@ module.exports = async function sendToServiceNow(data) {
   }
 
         /////////////
+            /////////////////////////////maping logic end///////////////
+            return res.status(200).send({ message: 'Success' })
+        } else {
+            // Could not decrypt the submission
+            return res.status(400).send({ message: 'Bad Request' })
+        }
+
+         
     }
 )
 
