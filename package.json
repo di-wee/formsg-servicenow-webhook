@@ -1,5 +1,5 @@
 {
-  "name": "formsg_poc",
+  "name": "formsg-servicenow-webhook",
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
