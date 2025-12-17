@@ -24,15 +24,16 @@ function findField(submission, keyword) {
 
   if (!Array.isArray(answers)) return null;
 
-  const item = answers.find(a =>
-    typeof a?.question === 'string' &&
-    a.question.toLowerCase().includes(keyword.toLowerCase())
-  );
+  //const item = answers.find(a =>
+    //typeof a?.question === 'string' &&
+    //a.question.toLowerCase().includes(keyword.toLowerCase())
+  //);
+  const item = answers.find(a => a.question === keyword);
 
   if (!item) return null;
 
   // Handle based on field type
-  if (typeof item.answer !== undefined) {
+  if (item.answer !== undefined) {
     return item.answer; // text, email, number, etc.
   }
 
