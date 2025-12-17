@@ -44,6 +44,33 @@ function findField(submission, keyword) {
   return null;
 }
 
+function findAddress(submission, exactQuestion) {
+  const answers = submission?.responses;
+  if (!Array.isArray(answers)) return null;
+
+  const item = answers.find(a => a.question === exactQuestion);
+  if (!item || !Array.isArray(item.answerArray)) return null;
+
+  const [
+    blockNumber,
+    streetName,
+    buildingName,
+    levelNumber,
+    unitNumber,
+    postalCode
+  ] = item.answerArray;
+
+  return {
+    blockNumber: blockNumber || null,
+    streetName: streetName || null,
+    buildingName: buildingName || null,
+    levelNumber: levelNumber || null,
+    unitNumber: unitNumber || null,
+    postalCode: postalCode || null
+  };
+}
+
+
 /////
 
 // 3) Send to ServiceNow
