@@ -20,7 +20,7 @@ const formSecretKey = process.env.FORM_SECRET_KEY
 const HAS_ATTACHMENTS = false
 
 function findField(submission, keyword) {
-  const answers = submission?.response?.answers;
+  const answers = submission?.responses;
 
   if (!Array.isArray(answers)) return null;
 
@@ -32,7 +32,7 @@ function findField(submission, keyword) {
   if (!item) return null;
 
   // Handle based on field type
-  if (item.answer !== undefined) {
+  if (typeof item.answer !== undefined) {
     return item.answer; // text, email, number, etc.
   }
 
@@ -157,7 +157,7 @@ app.post('/formsg/webhook',
     res.status(500).json({ error: "ServiceNow error" });
   }
     
-        return res.status(200).send({ message: 'Success' })
+        //return res.status(200).send({ message: 'Success' })
         } else {
             // Could not decrypt the submission
             return res.status(400).send({ message: 'Bad Request' })
