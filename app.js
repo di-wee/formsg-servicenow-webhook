@@ -139,6 +139,45 @@ function formatUnit(level, unit) {
   return null;
 }
 
+function extractJobChoices(submission) {
+  const answers = submission?.responses;
+  if (!Array.isArray(answers)) return [];
+
+  const jobChoices = {};
+
+  for (const a of answers) {
+    if (!a.question) continue;
+
+    // Match "Job Choice X:"
+    const match = a.question.match(/^Job Choice (\d+):\s*(.+)$/);
+    if (!match) continue;
+
+    const choiceNo = match[1]; // "1", "2"
+    const field = match[2];    // "Position Requested", etc.
+
+    if (!jobChoices[choiceNo]) {
+      jobChoices[choiceNo] = { choice: Number(choiceNo) };
+    }
+
+    if (field.includes("Position Requested")) {
+      jobChoices[choiceNo].position = a.answer || null;
+    }
+
+    if (field.includes("Expected Salary")) {
+      jobChoices[choiceNo].expectedSalary = a.answer || null;
+    }
+
+    if (field.includes("Requested Work Region")) {
+      jobChoices[choiceNo].workRegion = Array.isArray(a.answerArray)
+        ? a.answerArray.join(", ")
+        : null;
+    }
+  }
+
+  return Object.values(jobChoices);
+}
+
+
 
 
 
@@ -246,6 +285,36 @@ async function jobsendToServiceNow(data) {
   return jobresponse.data;
 };
 
+////////////
+
+async function sendJobChoicesToServiceNow(jobChoices, parentSysId) {
+  const url = `${process.env.SERVICENOW_INSTANCE}/api/now/table/u_job_choice`;
+
+  const auth = Buffer.from(
+    `${process.env.SERVICENOW_USERNAME}:${process.env.SERVICENOW_PASSWORD}`
+  ).toString("base64");
+
+  for (const job of jobChoices) {
+    await axios.post(
+      url,
+      {
+        u_parent_case: parentSysId,   // reference field
+        u_choice_no: job.choice,
+        u_position_requested: job.position,
+        u_expected_salary: job.expectedSalary,
+        u_requested_work_region: job.workRegion
+      },
+      {
+        headers: {
+          Authorization: `Basic ${auth}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+  }
+}
+//////////////////
+
 
 app.get('/', (req, res) => {
     res.status(200).send('Hello, this is the FormSG webhook receiver!')
@@ -278,7 +347,11 @@ app.post('/formsg/webhook',
             console.log(submission);
           const address = findAddress(submission, "Local address");
           const employmentList = findEmploymentHistory(submission,"Job History (Company Name, Job Position, Period of Employment MM/YY to MM/YY (e.g. 10/20 to 08/22), Salary)");
-    
+
+          const jobChoices = extractJobChoices(submission);
+
+          console.log("📦 Job Choices:", jobChoices);
+
   
       const jpattend = findField(submission,"Have you attended any Job Preparation (JP) session by YRSG for your current incarceration?");
       const assisted_by = findField(submission,"Are you being assisted by any staff from Yellow Ribbon Singapore (YRSG) or Selarang Halfway House?");
@@ -360,6 +433,8 @@ app.post('/formsg/webhook',
     last_drawn_salary: job.salary
   });
 }
+      await sendJobChoicesToServiceNow(jobChoices, parentSysId);    //job preference call to snow
+
     console.log("✔ Created record in ServiceNow:", result);
       //console.log("✔ Created record in ServiceNow:", jobresult);
     res.json({ status: "success" });
