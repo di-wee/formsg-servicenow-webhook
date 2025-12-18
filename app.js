@@ -31,6 +31,22 @@ function yesNoToBoolean(value) {
   return null;
 }
 
+function formatDateForServiceNow(dateStr) {
+  if (!dateStr) return null;
+
+  // Expected FormSG format: "03 Dec 2025"
+  const parsed = new Date(dateStr);
+
+  if (isNaN(parsed.getTime())) return null;
+
+  const yyyy = parsed.getFullYear();
+  const mm = String(parsed.getMonth() + 1).padStart(2, '0');
+  const dd = String(parsed.getDate()).padStart(2, '0');
+
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+
 
 function findField(submission, keyword) {
   const answers = submission?.responses;
@@ -258,6 +274,10 @@ app.post('/formsg/webhook',
       const jpattend = findField(submission,"Have you attended any Job Preparation (JP) session by YRSG for your current incarceration?");
       const assisted_by = findField(submission,"Are you being assisted by any staff from Yellow Ribbon Singapore (YRSG) or Selarang Halfway House?");
       const tattooAnswer = findField(submission,"Do you have any visible tattoo?");
+      const releasedate = findField(submission,"Date of Release (EDR)");
+      const emplacementdate = findField(submission,"Programme Emplacement Date");
+      const dobRaw = findField(submission,"Date of Birth");
+          
     const mapped = {
     demo: findField(submission,"Demo"),
     type_of_application: findField(submission,"Type of Application"),
@@ -265,8 +285,8 @@ app.post('/formsg/webhook',
     programme_details: findField(submission,"Programme Details"),
     programme_status: findField(submission,"Programme Status"),
     inmate_no: findField(submission,"Inmate No."),
-    dor: findField(submission,"Date of Release (EDR)"),
-    programme_emplacement_date: findField(submission,"Programme Emplacement Date"),
+    u_ed0: formatDateForServiceNow(releasedate),
+    u_cbp_emplacement_date: formatDateForServiceNow(emplacementdate),
     jp_attend: yesNoToBoolean(jpattend),
     where_jp_attend: findField(submission,"Where did you attend the Job Preparation (JP) session?"),
     assisted_by_yrsg: yesNoToBoolean(assisted_by),
@@ -279,7 +299,7 @@ app.post('/formsg/webhook',
     nationality: findField(submission,"Nationality"),
     sex: findField(submission,"Sex"),
     race: findField(submission,"Race"),
-    dob: findField(submission,"Date of Birth"),
+    u_dob: formatDateForServiceNow(dobRaw),
     marital_status: findField(submission,"Marital Status"),
     national_service: findField(submission,"National Service"),
     contact_number: findField(submission,"Contact Number"),
