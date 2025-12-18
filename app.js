@@ -19,6 +19,19 @@ const formSecretKey = process.env.FORM_SECRET_KEY
 // Set to true if you need to download and decrypt attachments from submissions
 const HAS_ATTACHMENTS = false
 
+function yesNoToBoolean(value) {
+  if (!value) return null;
+
+  if (typeof value === 'string') {
+    const v = value.trim().toLowerCase();
+    if (v === 'yes') return true;
+    if (v === 'no') return false;
+  }
+
+  return null;
+}
+
+
 function findField(submission, keyword) {
   const answers = submission?.responses;
 
@@ -148,7 +161,7 @@ async function sendToServiceNow(data) {
     u_unit_no: data.address_unit,
     u_postal_code: data.address_postal,
     u_building_name: data.address_building,
-    u_visible_tattoo: data.tattoo,
+    u_visible_tattoo: data.visible_tattoo,
     u_tattoo_details: data.tatto_details,
     //u_full_name: data.els,
     u_highest_edu_qualification: data.hel,
@@ -242,7 +255,9 @@ app.post('/formsg/webhook',
             employment_period: employment?.employmentPeriod,
             last_drawn_salary: employment?.salary
           };
-          
+      const jpattend = findField(submission,"Have you attended any Job Preparation (JP) session by YRSG for your current incarceration?");
+      const assisted_by = findField(submission,"Are you being assisted by any staff from Yellow Ribbon Singapore (YRSG) or Selarang Halfway House?");
+      const tattooAnswer = findField(submission,"Do you have any visible tattoo?");
     const mapped = {
     demo: findField(submission,"Demo"),
     type_of_application: findField(submission,"Type of Application"),
@@ -252,9 +267,9 @@ app.post('/formsg/webhook',
     inmate_no: findField(submission,"Inmate No."),
     dor: findField(submission,"Date of Release (EDR)"),
     programme_emplacement_date: findField(submission,"Programme Emplacement Date"),
-    jp_attend: findField(submission,"Have you attended any Job Preparation (JP) session by YRSG for your current incarceration?"),
+    jp_attend: yesNoToBoolean(jpattend),
     where_jp_attend: findField(submission,"Where did you attend the Job Preparation (JP) session?"),
-    assisted_by_yrsg: findField(submission,"Are you being assisted by any staff from Yellow Ribbon Singapore (YRSG) or Selarang Halfway House?"),
+    assisted_by_yrsg: yesNoToBoolean(assisted_by),
     name_yrsg: findField(submission,"Name and Contact Number of Yellow Ribbon Singapore (YRSG) or Selarang Halfway House staff who is assisting you"),
     current_last_offence: findField(submission,"Current or Last Offence"),
     ro_name: findField(submission,"Reintegration Officer (RO)'s Name and Contact Number"),
@@ -278,7 +293,7 @@ app.post('/formsg/webhook',
   //address_level: address?.levelNumber,
   address_unit: address?.unitNumber,
   address_postal: address?.postalCode,
-    tattoo: findField(submission,"Do you have any visible tattoo?"),
+    visible_tattoo: yesNoToBoolean(tattooAnswer),
     tatto_details: findField(submission,"Tattoo Details"),
     els: findField(submission,"Education / Language Proficiency / Skills"),
     hel: findField(submission,"Highest Educational Level"),
