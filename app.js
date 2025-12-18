@@ -180,6 +180,7 @@ async function jobsendToServiceNow(data) {
   ).toString('base64');
 
   const jobpayload = {
+    u_inmate_no: data.parent_sys_id, // reference field
     u_company_name: data.company_name,
     u_occupation: data.job_position,
     u_period: data.employment_period,
@@ -278,7 +279,7 @@ app.post('/formsg/webhook',
     spoken: findField(submission,"Spoken (Language)"),
     written: findField(submission,"Written (Language)"),
     dlc: findField(submission,"Driving/Vocational Licence/Certification"),
-    employment_history: findField(submission,"Employment History"),
+    //employment_history: findField(submission,"Employment History"),
     //cjp: findField(submission,"Job History (Company Name, Job Position, Period of Employment MM/YY to MM/YY (e.g. 10/20 to 08/22), Salary)"),
     jps1: findField(submission,"Job Choice 1: Position Requested"),
     jes1: findField(submission,"Job Choice 1: Expected Salary"),
@@ -294,7 +295,11 @@ app.post('/formsg/webhook',
         console.log("📦 Mapped payload:", jobmapped);
     try {
     const result = await sendToServiceNow(mapped);
-      const jobresult = await jobsendToServiceNow(jobmapped);
+      const parentSysId = result.result.sys_id;
+      const jobresult = await jobsendToServiceNow({
+  ...jobmapped,
+  parent_sys_id: parentSysId
+});
     console.log("✔ Created record in ServiceNow:", result);
       console.log("✔ Created record in ServiceNow:", jobresult);
     res.json({ status: "success" });
