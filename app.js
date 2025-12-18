@@ -126,6 +126,14 @@ function findEmploymentHistory(submission, exactQuestion) {
   };
 }
 
+function formatUnit(level, unit) {
+  if (!level && !unit) return null;
+  if (level && unit) return `#${level}-${unit}`;
+  if (level) return `#${level}`;
+  if (unit) return `#${unit}`;
+  return null;
+}
+
 
 
 
@@ -174,7 +182,7 @@ async function sendToServiceNow(data) {
     //u_full_name: data.local_address,
     u_blk_hse_no: data.address_block,
     u_street_name: data.address_street,
-    u_unit_no: data.address_level-data.address_unit,
+    u_unit_no: formatUnit(data.address_level, data.address_unit),
     u_postal_code: data.address_postal,
     u_building_name: data.address_building,
     u_visible_tattoo: data.visible_tattoo,
