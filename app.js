@@ -101,30 +101,35 @@ function findAddress(submission, exactQuestion) {
 
 function findEmploymentHistory(submission, exactQuestion) {
   const answers = submission?.responses;
-  if (!Array.isArray(answers)) return null;
+  if (!Array.isArray(answers)) return [];
 
   const item = answers.find(a => a.question === exactQuestion);
-  if (!item || !Array.isArray(item.answerArray)) return null;
+  if (!item || !Array.isArray(item.answerArray)) return [];
 
-  // 🔥 Handle nested array
-  const row = Array.isArray(item.answerArray[0])
-    ? item.answerArray[0]
-    : item.answerArray;
+  // Normalize to array of rows
+  const rows = Array.isArray(item.answerArray[0])
+    ? item.answerArray
+    : [item.answerArray];
 
-  const [
-    companyName,
-    jobPosition,
-    employmentPeriod,
-    salary
-  ] = row;
+  return rows
+    .filter(row => Array.isArray(row) && row.some(v => v)) // remove empty rows
+    .map(row => {
+      const [
+        companyName,
+        jobPosition,
+        employmentPeriod,
+        salary
+      ] = row;
 
-  return {
-    companyName: companyName || null,
-    jobPosition: jobPosition || null,
-    employmentPeriod: employmentPeriod || null,
-    salary: salary || null
-  };
+      return {
+        companyName: companyName || null,
+        jobPosition: jobPosition || null,
+        employmentPeriod: employmentPeriod || null,
+        salary: salary || null
+      };
+    });
 }
+
 
 function formatUnit(level, unit) {
   if (!level && !unit) return null;
@@ -272,13 +277,9 @@ app.post('/formsg/webhook',
             // Continue processing the submission
             console.log(submission);
           const address = findAddress(submission, "Local address");
-          const employment = findEmploymentHistory(submission,"Job History (Company Name, Job Position, Period of Employment MM/YY to MM/YY (e.g. 10/20 to 08/22), Salary)");
-          const jobmapped = {
-            company_name: employment?.companyName,
-            job_position: employment?.jobPosition,
-            employment_period: employment?.employmentPeriod,
-            last_drawn_salary: employment?.salary
-          };
+          const employmentList = findEmploymentHistory(submission,"Job History (Company Name, Job Position, Period of Employment MM/YY to MM/YY (e.g. 10/20 to 08/22), Salary)");
+    
+  
       const jpattend = findField(submission,"Have you attended any Job Preparation (JP) session by YRSG for your current incarceration?");
       const assisted_by = findField(submission,"Are you being assisted by any staff from Yellow Ribbon Singapore (YRSG) or Selarang Halfway House?");
       const tattooAnswer = findField(submission,"Do you have any visible tattoo?");
@@ -342,16 +343,25 @@ app.post('/formsg/webhook',
   };
 
         console.log("📦 Mapped payload:", mapped);
-        console.log("📦 Mapped payload:", jobmapped);
+        //console.log("📦 Mapped payload:", jobmapped);
     try {
     const result = await sendToServiceNow(mapped);
       const parentSysId = result.result.sys_id;
-      const jobresult = await jobsendToServiceNow({
-  ...jobmapped,
-  parent_sys_id: parentSysId
-});
+      //const jobresult = await jobsendToServiceNow({
+  //...jobmapped,
+ // parent_sys_id: parentSysId
+//});
+  for (const job of employmentList) {
+  await jobsendToServiceNow({
+    parent_sys_id: parentSysId,
+    company_name: job.companyName,
+    job_position: job.jobPosition,
+    employment_period: job.employmentPeriod,
+    last_drawn_salary: job.salary
+  });
+}
     console.log("✔ Created record in ServiceNow:", result);
-      console.log("✔ Created record in ServiceNow:", jobresult);
+      //console.log("✔ Created record in ServiceNow:", jobresult);
     res.json({ status: "success" });
   } catch (err) {
     console.error("❌ Failed to send to ServiceNow:", err);
