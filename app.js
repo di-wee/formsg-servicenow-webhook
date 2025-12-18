@@ -77,12 +77,17 @@ function findEmploymentHistory(submission, exactQuestion) {
   const item = answers.find(a => a.question === exactQuestion);
   if (!item || !Array.isArray(item.answerArray)) return null;
 
+  // 🔥 Handle nested array
+  const row = Array.isArray(item.answerArray[0])
+    ? item.answerArray[0]
+    : item.answerArray;
+
   const [
     companyName,
     jobPosition,
     employmentPeriod,
     salary
-  ] = item.answerArray;
+  ] = row;
 
   return {
     companyName: companyName || null,
@@ -91,6 +96,7 @@ function findEmploymentHistory(submission, exactQuestion) {
     salary: salary || null
   };
 }
+
 
 
 
