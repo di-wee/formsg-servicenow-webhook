@@ -232,7 +232,7 @@ app.post('/formsg/webhook',
             company_name: employment?.companyName,
             job_position: employment?.jobPosition,
             employment_period: employment?.employmentPeriod,
-            last_drawn_salary: employment?.salary,
+            last_drawn_salary: employment?.salary
           };
           
     const mapped = {
@@ -294,7 +294,7 @@ app.post('/formsg/webhook',
         console.log("📦 Mapped payload:", jobmapped);
     try {
     const result = await sendToServiceNow(mapped);
-      const jobresult = await sendToServiceNow(jobmapped);
+      const jobresult = await jobsendToServiceNow(jobmapped);
     console.log("✔ Created record in ServiceNow:", result);
       console.log("✔ Created record in ServiceNow:", jobresult);
     res.json({ status: "success" });
