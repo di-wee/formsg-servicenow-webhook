@@ -30,6 +30,29 @@ function yesNoToBoolean(value) {
 
   return null;
 }
+/////////////////
+function hasOption(value, expectedText) {
+  if (!value) return false;
+
+  // If FormSG gives array
+  if (Array.isArray(value)) {
+    return value.some(v =>
+      typeof v === "string" &&
+      v.trim().toLowerCase() === expectedText.toLowerCase()
+    );
+  }
+
+  // If comma-separated string
+  if (typeof value === "string") {
+    return value
+      .split(",")
+      .map(v => v.trim().toLowerCase())
+      .includes(expectedText.toLowerCase());
+  }
+
+  return false;
+}
+////////////////////////
 
 function formatDateForServiceNow(dateStr) {
   if (!dateStr) return null;
@@ -210,7 +233,8 @@ async function upsertParentCase(data) {
   const auth = Buffer.from(
     `${process.env.SERVICENOW_USERNAME}:${process.env.SERVICENOW_PASSWORD}`
   ).toString("base64");
-
+  
+  
   const payload = {
     u_inmate_no: data.inmate_no,
     u_application_type: data.type_of_application,
@@ -249,13 +273,36 @@ async function upsertParentCase(data) {
     u_written_language: data.written,
     u_driving_vocational_license_certification: data.dlc,
     u_work_hours_preference: data.whp,
-    u_religious_preference: data.religious_preference
+    u_religious_preference: data.religious_preference,
+
+    //  Work hours preferences
+    u_shift_duties: hasOption(
+      data.whp,
+      "I am willing to perform shift duties"
+    ),
+  
+    u_holidays: hasOption(
+      data.whp,
+      "I am willing to work on weekends and/or public holidays"
+    ),
+  
+    //  Religious preferences
+    u_non_halal_estblmnt: hasOption(
+      data.religious_preference,
+      "I am willing to work in a non-Halal establishment"
+    ),
+  
+    u_halal_estblmntto: hasOption(
+      data.religious_preference,
+      "I am willing to work only in a Halal establishment"
+    )
+
   };
 
   const existing = await getCaseByInmateNo(data.inmate_no);
 
   if (existing) {
-    // 🔄 UPDATE
+    //  UPDATE
     const updateUrl =
       `${process.env.SERVICENOW_INSTANCE}` +
       `/api/now/table/${process.env.SERVICENOW_TABLE}/${existing.sys_id}`;
@@ -270,7 +317,7 @@ async function upsertParentCase(data) {
     return { sys_id: existing.sys_id, action: "updated", result: res.data };
   }
 
-  // 🆕 CREATE
+  //  CREATE
   const createUrl =
     `${process.env.SERVICENOW_INSTANCE}` +
     `/api/now/table/${process.env.SERVICENOW_TABLE}`;
@@ -292,7 +339,7 @@ async function deleteChildRecords(table, parentSysId) {
     `${process.env.SERVICENOW_USERNAME}:${process.env.SERVICENOW_PASSWORD}`
   ).toString("base64");
 
-  // 1️⃣ Fetch child records
+  //  Fetch child records
   const getRes = await axios.get(
    // `${baseUrl}?sysparm_query=u_inmate_no=${parentSysId}`,
     `${baseUrl}?sysparm_query=u_inmate_no.sys_id=${parentSysId}`,
@@ -304,7 +351,7 @@ async function deleteChildRecords(table, parentSysId) {
 
   const records = getRes.data.result || [];
 
-  // 2️⃣ Delete each record by sys_id
+  //  Delete each record by sys_id
   for (const rec of records) {
     await axios.delete(`${baseUrl}/${rec.sys_id}`, {
       headers: { Authorization: `Basic ${auth}` }
@@ -404,7 +451,7 @@ app.post('/formsg/webhook',
 
           const jobChoices = extractJobChoices(submission);
 
-          console.log("📦 Job Choices:", jobChoices);
+          console.log(" Job Choices:", jobChoices);
 
   
       const jpattend = findField(submission,"Have you attended any Job Preparation (JP) session by YRSG for your current incarceration?");
@@ -469,13 +516,13 @@ app.post('/formsg/webhook',
     religious_preference: findField(submission,"For Clients with Religious Preferences: F&B/Grocery/Food Delivery Jobs"),
   };
 
-        console.log("📦 Mapped payload:", mapped);
-        //console.log("📦 Mapped payload:", jobmapped);
+        console.log(" Mapped payload:", mapped);
+        //console.log(" Mapped payload:", jobmapped);
     try {
       const parent = await upsertParentCase(mapped);
       const parentSysId = parent.sys_id;
 
-      console.log(`✔ Parent record ${parent.action}:`, parentSysId);
+      console.log(` Parent record ${parent.action}:`, parentSysId);
 
     //const result = await sendToServiceNow(mapped);
       //const parentSysId = result.result.sys_id;
@@ -499,11 +546,11 @@ for (const job of employmentList) {                  // job history
 await sendJobChoicesToServiceNow(jobChoices, parentSysId);  ////job preference
 
 
-    console.log("✔ Created record in ServiceNow:");
-      //console.log("✔ Created record in ServiceNow:", jobresult);
+    console.log(" Created record in ServiceNow");
+      //console.log("Created record in ServiceNow:", jobresult);
     res.json({ status: "success" });
   } catch (err) {
-    console.error("❌ Failed to send to ServiceNow:", err);
+    console.error("Failed to send to ServiceNow:", err);
     res.status(500).json({ error: "ServiceNow error" });
   }
     
