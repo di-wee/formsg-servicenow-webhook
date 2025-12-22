@@ -11,7 +11,7 @@ const formsg = require('@opengovsg/formsg-sdk')({ mode: 'staging' })
 
 // This is where your domain is hosted, and should match
 // the URI supplied to FormSG in the form dashboard
-const POST_URI = 'https://formsg-servicenow-webhook.onrender.com/formsg/webhook'
+const POST_URI = 'https://formsg-servicenow-webhook-mueb.onrender.com/formsg/webhook'
 
 // Your form's secret key downloaded from FormSG upon form creation
 const formSecretKey = process.env.FORM_SECRET_KEY
