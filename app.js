@@ -421,6 +421,11 @@ app.get('/', (req, res) => {
     res.status(200).send('Hello, this is the FormSG webhook receiver!')
 });
 
+app.get('/health', (req, res) => {
+  console.log('health check hit');
+  res.status(200).send('OK');
+});
+
 app.post('/formsg/webhook',
     // Endpoint authentication by verifying signatures
     function (req, res, next) {
@@ -563,8 +568,8 @@ await sendJobChoicesToServiceNow(jobChoices, parentSysId);  ////job preference
     }
 )
 
-const PORT = process.env.PORT || 8080;
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`server running on port ${PORT}`);
 });
